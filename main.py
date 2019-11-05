@@ -1,11 +1,12 @@
 from secret import  api_key, url, domain, game
 from issue_format import display_request
 #Python Library
+from datetime import datetime, time, timedelta
 import requests
 import json
 import base64
 import sys
-import time
+
 
 
 #data
@@ -15,12 +16,15 @@ category_list =["Crashing", "Freezing", "Loading", "Bought Currency/Got Kicked O
 
 
 
-now = int(round(time.time() * 1000))
-yesterday = now - 86400000
-yester2= yesterday - 86400000
+#now = int(round(time.time() * 1000))
+#yesterday = now - 86400000
+#yester2= yesterday - 86400000
 
 
-
+def midnight():
+    midnight = datetime.combine(datetime.today(), time.min)
+    today = int(midnight.timestamp() *1000)
+    return today
 
 
 def endpoint():
@@ -111,11 +115,11 @@ def retrieve_count(my_game = None):
 
     for each_game in my_game_list:
       print ("Last 24 hours...")
-      response_json = api_call(api_key,each_game,None,yesterday,now)
+      response_json = api_call(api_key,each_game,None,yesterday,today)
       print ("%s : Total %d"%(each_game,response_json['total-hits']))
       for each_category in category_list:
           
-          response_json = api_call(api_key,each_game,each_category,yesterday,now)
+          response_json = api_call(api_key,each_game,each_category,yesterday,today)
           count = response_json['total-hits']
           if count > 0:
             print ('%s : %d'%(each_category,response_json['total-hits']))    
@@ -142,6 +146,11 @@ def retrieve_id(my_id):
 
 
 if __name__ == "__main__":
+
+
+    today = midnight()
+    yesterday = today - 86400000
+    yester2= yesterday - 86400000
 
     if len(sys.argv)>1:
         print (sys.argv[1])
