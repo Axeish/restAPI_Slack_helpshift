@@ -1,5 +1,5 @@
 from secret import  api_key, url, domain, game
-
+from issue_format import display_request
 #Python Library
 import requests
 import json
@@ -18,6 +18,9 @@ category_list =["Crashing", "Freezing", "Loading", "Bought Currency/Got Kicked O
 now = int(round(time.time() * 1000))
 yesterday = now - 86400000
 yester2= yesterday - 86400000
+
+
+
 
 
 def endpoint():
@@ -56,11 +59,57 @@ def api_call(api_key,game,category,start,end):
     
      
     response = requests.get(url, headers=headers, params=params)
-    return response.json()     
+    return response.json()   
 
-def retrieve_count():
+def api_call_b(api_key,game,end):
+
+    url = endpoint()    
+    encode = base64.b64encode(api_key.encode("UTF-8"))
+    headers = {
+        'Accept': 'application/json',
+        'Authorization': b'Basic '+encode,
+    }
+   
+     
+    cif = '{"dropdown": {"and": {"game":{"is_set":true, "is":"%s"} }}}'%(game)
+   
     
-    for each_game in game:
+    params = (
+
+
+    
+    ('state', 'new,pending-reassignment'),
+    ('custom_fields', cif),
+    ('state_until', str(end)),
+    ('page-size', '100'))
+    
+
+     
+    response = requests.get(url, headers=headers, params=params)
+    return response.json()       
+
+
+
+def api_call_id(api_key,url):
+    
+    encode = base64.b64encode(api_key.encode("UTF-8"))
+    headers = {
+        'Accept': 'application/json',
+        'Authorization': b'Basic '+encode,
+    }
+
+    response = requests.get(url, headers=headers)
+    return response.json()
+
+
+def retrieve_count(my_game = None):
+    my_game_list = []
+    if my_game:
+    	my_game_list.append(my_game)
+    else:
+    	my_game_list.extend(game)
+
+    for each_game in my_game_list:
       print ("Last 24 hours...")
       response_json = api_call(api_key,each_game,None,yesterday,now)
       print ("%s : Total %d"%(each_game,response_json['total-hits']))
@@ -72,12 +121,45 @@ def retrieve_count():
             print ('%s : %d'%(each_category,response_json['total-hits']))    
       print('-------------------')
 
-def action():
-	retrieve_count()    
+
+def retrieve_back(my_game= None):
+  if my_game:
+    response_json = api_call_b(api_key,my_game,yesterday)
+    print ("%s : Total %d"%(my_game,response_json['total-hits']))
+    return 1
+  print ("last 48 hours")
+  for each_game in game:
+    response_json = api_call_b(api_key,each_game,yesterday)
+    print ("%s : Total %d"%(each_game,response_json['total-hits']))
+ 
+
+def retrieve_id(my_id):
+  url = endpoint()
+  url = url + my_id	
+  response_json = api_call_id(api_key, url)
+  message = display_request(response_json)
+  print (message)
+
 
 if __name__ == "__main__":
 
-	so = endpoint()
-	print(endpoint)
-	print(url)
-	action()
+    if len(sys.argv)>1:
+        print (sys.argv[1])
+        if sys.argv[1] == "backlog":
+          if len(sys.argv)>2:	
+            retrieve_back(sys.argv[2])
+          else:
+            retrieve_back()  
+        elif sys.argv[1] == "daily_count":
+          if len(sys.argv)>2:	
+            retrieve_count(sys.argv[2])
+          else:
+            retrieve_count()
+        elif sys.argv[1][:2]== 'ID':
+            retrieve_id(sys.argv[1][2:])    
+        else:
+          print ("choose 'backlog', 'daily_count', 'ID' ")    
+    else:
+        print ("choose 'backlog', 'daily_count', 'ID' ")          	
+    #action()
+
