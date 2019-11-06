@@ -26,6 +26,9 @@ def midnight():
     today = int(midnight.timestamp() *1000)
     return today
 
+today = midnight()
+yesterday = today - 86400000    
+yester2= yesterday - 86400000
 
 def endpoint():
     endpoint = url + 'issues/' 
@@ -108,6 +111,8 @@ def api_call_id(api_key,url):
 
 def retrieve_count(my_game = None):
     my_game_list = []
+    game_data = {}
+    game_data["game"]= my_game
     if my_game:
     	my_game_list.append(my_game)
     else:
@@ -116,15 +121,18 @@ def retrieve_count(my_game = None):
     for each_game in my_game_list:
       print ("Last 24 hours...")
       response_json = api_call(api_key,each_game,None,yesterday,today)
-      print ("%s : Total %d"%(each_game,response_json['total-hits']))
+      total = " Total %d"%(response_json['total-hits'])
+      game_data["total"]=total
+      game_data["category"] = []	
       for each_category in category_list:
           
           response_json = api_call(api_key,each_game,each_category,yesterday,today)
           count = response_json['total-hits']
           if count > 0:
-            print ('%s : %d'%(each_category,response_json['total-hits']))    
+            cat_data = '%s : %d'%(each_category,response_json['total-hits'])
+            game_data["category"].append(cat_data)    
       print('-------------------')
-
+      return game_data 
 
 def retrieve_back(my_game= None):
   if my_game:
@@ -144,13 +152,11 @@ def retrieve_id(my_id):
   message = display_request(response_json)
   print (message)
 
-
+'''
 if __name__ == "__main__":
 
 
-    today = midnight()
-    yesterday = today - 86400000
-    yester2= yesterday - 86400000
+    
 
     if len(sys.argv)>1:
         print (sys.argv[1])
@@ -171,4 +177,4 @@ if __name__ == "__main__":
     else:
         print ("choose 'backlog', 'daily_count', 'ID' ")          	
     #action()
-
+'''
