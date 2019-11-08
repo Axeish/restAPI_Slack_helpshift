@@ -68,7 +68,7 @@ def job(t):
   webhook_call()
 
 
-schedule.every().day.at("5:30").do(job,'')
+schedule.every().day.at("05:30").do(job,'')
 
 while True:
     schedule.run_pending()
