@@ -18,6 +18,8 @@ import json
 import base64
 import sys
 
+#--------------------------------------------------------------
+#fucntionalities
 
 
 def midnight():
@@ -26,29 +28,13 @@ def midnight():
     return today
 
 
-today = midnight()
-yesterday = today - 86400000    
-yester2= yesterday - 86400000 
-
-
-def endpoint():
-    endpoint = url + 'issues/' 
-    return endpoint
-
-def slack_bolder(data):
-    return "*" + data + "*"
-
-#--------------------------------------------------------------
-#fucntionalities
-
-
-def api_call_request(game,category,start,end):
+def game_data_request(game,category,start,end):
     '''
     defines relevant headers and params for api call and then 
     makes that api call
     '''
-    
-    url = endpoint()    
+
+    my_url = url + 'issues/'    
     encode = base64.b64encode(api_key.encode("UTF-8"))
     cif_type = '"dropdown":'
     category_param = '"category":{"is_set":true, "is": "%s"}'%category
@@ -80,11 +66,14 @@ def api_call_request(game,category,start,end):
     
     try:
 
-        response = requests.get(url, headers=headers, params=params)
+        response = requests.get(my_url, headers=headers, params=params)
+        return response.json()
+
     except requests.exceptions.RequestException as e:  
-        print (e)
-        sys.exit(1)    
-    return response.json()
+        print ("ERROR: <hs_main line 73> :")
+        print (str(e)[:80] + "...")
+        return {'error': str(e)[:80] + "..."}   
+    
 
 
 def retrieve_count(my_game = None):
@@ -93,20 +82,30 @@ def retrieve_count(my_game = None):
     returning game_data
 
     '''
+    day_milisecond = 86400000
+    today_epoch = midnight()
+    yesterday = today_epoch - day_milisecond    
+    yester2= yesterday - day_milisecond 
+
     game_data = {}
     game_data["game"] = my_game
     game_data["date"] = (datetime.today() - timedelta(1)).strftime("%B %d, %Y")
-    
+    game_data["error"] = None
 
-    response_json = api_call_request(my_game,None,yesterday,today)
-    
+    response_json = game_data_request(my_game,None,yesterday,today_epoch)
+    if response_json==None:
+      game_data['error'] = "*Error*:"
+      return game_data
+    if 'error' in response_json:
+      game_data['error'] = "*Error*: %s"%json.dumps(response_json['error'])
+      return game_data
     game_data["total"] = response_json['total-hits']
     
     game_data["category"] = []
 
     for each_category in category_list:
           highlight = ""   #highlight data for anything more than 10 in count
-          response_json = api_call_request(my_game,each_category,yesterday,today)
+          response_json = game_data_request(my_game,each_category,yesterday,today_epoch)
           
           if response_json == None:             
             game_data["category"].append(each_category)
@@ -115,12 +114,11 @@ def retrieve_count(my_game = None):
             count = response_json['total-hits']
             if count > 0:
               if count >10:
-                each_category = slack_bolder(each_category)
+                each_category = "*" + each_category + "*"
                 highlight="*"
               cat_data = '>%s : %d%s'%(each_category,response_json['total-hits'],highlight)
               game_data["category"].append(cat_data)    
 
-    
     return game_data 
 
 

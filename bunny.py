@@ -21,7 +21,7 @@ import time
 #--------------------------------------------------------------
 #fucntionalities
 
-def compile_slack(data):
+def slack_format(data):
   '''
   code to just use leftover slack formating
   '''
@@ -43,34 +43,42 @@ def webhook_call(data=None):
 
   for each_game,token in game.items():
     mydata = retrieve_count(each_game)
-    message = compile_slack(mydata)
+    if mydata['error']:
+      message = mydata['error']
+      print("---------------")
+      print(message)
+    else: 
+      message = slack_format(mydata)
     slack_data = {'text': message}
     
 
     try:
 
       response = requests.post(
-        token, data = json.dumps(slack_data),
+          token, data = json.dumps(slack_data),
         headers = {'Content-Type': 'application/json'})
 
-      print('-------successfully posed to ------%s'%each_game)
+      print('SUCCESS: Posted to %s'%each_game)
     
     except requests.exceptions.RequestException as e:  
-        print (e)
-        sys.exit(1)  
+        print ("ERROR: <bunny line 64> :")
+        print(str(e)[:80] + '...')
+        pass  
   
 
 
 def job(t):
   '''
-  # The main Scheduler function start from here . This is also the Entry point for this entire project
+  More function will be added to this. 
+  Keeping it separate function
   '''  
   webhook_call()
 
+if __name__ == "__main__":
 
-schedule.every().day.at("05:30").do(job,'')
+  schedule.every().day.at("05:30").do(job,'')
 
-while True:
+  while True:
     schedule.run_pending()
     time.sleep(60) # wait one minute
 
