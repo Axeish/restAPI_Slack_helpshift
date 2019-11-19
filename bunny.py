@@ -17,6 +17,7 @@ import json
 import requests
 import schedule
 import time
+import logging
 
 #--------------------------------------------------------------
 #fucntionalities
@@ -36,17 +37,17 @@ def slack_format(data):
   return message
 
 
-def webhook_call(data=None):
+def webhook_call(logger, data=None):
   '''
   This function is just a capsule for the scheduler 
   '''
 
   for each_game,token in game.items():
-    mydata = retrieve_count(each_game)
+    mydata = retrieve_count(logger,each_game)
     if mydata['error']:
       message = mydata['error']
-      print("---------------")
-      print(message)
+      
+     
     else: 
       message = slack_format(mydata)
     slack_data = {'text': message}
@@ -58,11 +59,10 @@ def webhook_call(data=None):
           token, data = json.dumps(slack_data),
         headers = {'Content-Type': 'application/json'})
 
-      print('SUCCESS: Posted to %s'%each_game)
+      logger.info('SUCCESS: Posted to %s'%each_game)
     
     except requests.exceptions.RequestException as e:  
-        print ("ERROR: <bunny line 64> :")
-        print(str(e)[:80] + '...')
+        logger.exception("Webhook post failed")
         pass  
   
 
@@ -71,10 +71,19 @@ def job(t):
   '''
   More function will be added to this. 
   Keeping it separate function
+
   '''  
-  webhook_call()
+  log_filename = "app.log"
+  logging.basicConfig(filename=log_filename, 
+                    format='%(asctime)s %(message)s', 
+                    filemode='a') 
+  logger=logging.getLogger() 
+  webhook_call(logger)
 
 if __name__ == "__main__":
+
+
+ ''' 
 
   schedule.every().day.at("05:30").do(job,'')
 
@@ -83,5 +92,5 @@ if __name__ == "__main__":
     time.sleep(60) # wait one minute
 
 '''
-webhook_call()
-'''
+job(1)
+

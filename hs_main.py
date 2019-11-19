@@ -17,7 +17,7 @@ import requests
 import json
 import base64
 import sys
-
+import logging
 #--------------------------------------------------------------
 #fucntionalities
 
@@ -28,7 +28,7 @@ def midnight():
     return today
 
 
-def game_data_request(game,category,start,end):
+def game_data_request(logger,game,category,start,end):
     '''
     defines relevant headers and params for api call and then 
     makes that api call
@@ -70,13 +70,12 @@ def game_data_request(game,category,start,end):
         return response.json()
 
     except requests.exceptions.RequestException as e:  
-        print ("ERROR: <hs_main line 73> :")
-        print (str(e)[:80] + "...")
+        logger.exception("Webhook post failed")
         return {'error': str(e)[:80] + "..."}   
     
 
 
-def retrieve_count(my_game = None):
+def retrieve_count(logger, my_game, days = None):
     '''
     Game_data is a dictionary that will be  get filled after each api call. 
     returning game_data
@@ -84,15 +83,19 @@ def retrieve_count(my_game = None):
     '''
     day_milisecond = 86400000
     today_epoch = midnight()
-    yesterday = today_epoch - day_milisecond    
-    yester2= yesterday - day_milisecond 
+    if days:
+      days = int(days)
+    else:
+      days = 1   
+    yesterday = today_epoch - (day_milisecond *int(days))    
+    
 
     game_data = {}
     game_data["game"] = my_game
     game_data["date"] = (datetime.today() - timedelta(1)).strftime("%B %d, %Y")
     game_data["error"] = None
 
-    response_json = game_data_request(my_game,None,yesterday,today_epoch)
+    response_json = game_data_request(logger,my_game,None,yesterday,today_epoch)
     if response_json==None:
       game_data['error'] = "*Error*:"
       return game_data
@@ -102,10 +105,10 @@ def retrieve_count(my_game = None):
     game_data["total"] = response_json['total-hits']
     
     game_data["category"] = []
-
+    
     for each_category in category_list:
           highlight = ""   #highlight data for anything more than 10 in count
-          response_json = game_data_request(my_game,each_category,yesterday,today_epoch)
+          response_json = game_data_request(logger,my_game,each_category,yesterday,today_epoch)
           
           if response_json == None:             
             game_data["category"].append(each_category)
