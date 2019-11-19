@@ -88,7 +88,7 @@ def retrieve_count(logger, my_game, days = None):
     else:
       days = 1   
     yesterday = today_epoch - (day_milisecond *int(days))    
-    
+    yesterday2 = yesterday - day_milisecond
 
     game_data = {}
     game_data["game"] = my_game
@@ -103,6 +103,7 @@ def retrieve_count(logger, my_game, days = None):
       game_data['error'] = "*Error*: %s"%json.dumps(response_json['error'])
       return game_data
     game_data["total"] = response_json['total-hits']
+
     
     game_data["category"] = []
     

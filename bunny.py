@@ -83,7 +83,6 @@ def job(t):
 if __name__ == "__main__":
 
 
- ''' 
 
   schedule.every().day.at("05:30").do(job,'')
 
@@ -91,6 +90,4 @@ if __name__ == "__main__":
     schedule.run_pending()
     time.sleep(60) # wait one minute
 
-'''
-job(1)
 
