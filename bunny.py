@@ -27,12 +27,12 @@ def slack_format(data):
   code to just use leftover slack formating
   '''
 
-  total = "Total %d"%(data["total"])
-  message =  "Hello, %s Team \n Daily Summary for %s\n"%(data["game"],data["date"])
+  total = "Total %d"%(data.total)
+  message =  "Hello, %s Team \n Daily Summary for %s\n"%(data.name,data.date)
   message = message + "*%s*\n"%total
   message = message + "*Category:*\n"
   
-  for each in data["category"]:
+  for each in data.category:
     message = message + each + '\n'
   return message
 
@@ -44,8 +44,9 @@ def webhook_call(logger, data=None):
 
   for each_game,token in game.items():
     mydata = retrieve_count(logger,each_game)
-    if mydata['error']:
-      message = mydata['error']
+    
+    if mydata.error:
+      message = mydata.error
       
      
     else: 
@@ -54,7 +55,6 @@ def webhook_call(logger, data=None):
     
 
     try:
-
       response = requests.post(
           token, data = json.dumps(slack_data),
         headers = {'Content-Type': 'application/json'})
@@ -64,8 +64,6 @@ def webhook_call(logger, data=None):
     except requests.exceptions.RequestException as e:  
         logger.exception("Webhook post failed")
         pass  
-  
-
 
 def job(t):
   '''

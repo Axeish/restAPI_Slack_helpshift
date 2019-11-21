@@ -19,7 +19,24 @@ import base64
 import sys
 import logging
 #--------------------------------------------------------------
-#fucntionalities
+#functionalities
+
+class Game_record:
+  date = (datetime.today() - timedelta(1)).strftime("%B %d, %Y")
+  total = None
+  error = None
+  category = []
+
+  def __init__(self,name,start, end):
+    self.name = name
+    self.start = start
+    self.end = end
+  def set_total(self,total) :
+    self.total =total 
+  def set_error(self, error) :
+    self.error =error 
+  def add_category(self, cat):
+        self.category.append(cat)    
 
 
 def midnight():
@@ -76,54 +93,48 @@ def game_data_request(logger,game,category,start,end):
 
 
 def retrieve_count(logger, my_game, days = None):
-    '''
-    Game_data is a dictionary that will be  get filled after each api call. 
-    returning game_data
+  '''
+  Game_data is a dictionary that will be  get filled after each api call. 
+  returning game_data
 
-    '''
-    day_milisecond = 86400000
-    today_epoch = midnight()
-    if days:
-      days = int(days)
-    else:
-      days = 1   
-    yesterday = today_epoch - (day_milisecond *int(days))    
-    yesterday2 = yesterday - day_milisecond
+  '''
+  print(category_list)
+  day_milisecond = 86400000
+  today_epoch = midnight()
+  if days:
+    days = int(days)
+  else:
+    days = 1   
+  start_day = today_epoch - (day_milisecond *int(days))    
+  start_day2 = start_day - day_milisecond
 
-    game_data = {}
-    game_data["game"] = my_game
-    game_data["date"] = (datetime.today() - timedelta(1)).strftime("%B %d, %Y")
-    game_data["error"] = None
+  g = Game_record(my_game,start_day,today_epoch)
 
-    response_json = game_data_request(logger,my_game,None,yesterday,today_epoch)
-    if response_json==None:
-      game_data['error'] = "*Error*:"
-      return game_data
-    if 'error' in response_json:
-      game_data['error'] = "*Error*: %s"%json.dumps(response_json['error'])
-      return game_data
-    game_data["total"] = response_json['total-hits']
-
-    
-    game_data["category"] = []
-    
-    for each_category in category_list:
-          highlight = ""   #highlight data for anything more than 10 in count
-          response_json = game_data_request(logger,my_game,each_category,yesterday,today_epoch)
-          
-          if response_json == None:             
-            game_data["category"].append(each_category)
+  response_json = game_data_request(logger,my_game,None,start_day,today_epoch)
+  if response_json==None:
+    g.set_error("*Error*:")
+    return game_data
+  if 'error' in response_json:
+    g.set_error("*Error*: %s"%json.dumps(response_json['error']))
+    return game_data
+  hits = response_json["total-hits"]
+  g.set_total(hits)
+  
+  for each_category in category_list:
+    highlight = ""   #highlight data for anything more than 10 in count
+    response_json = game_data_request(logger,my_game,each_category,start_day,today_epoch)
+    print(each_category)      
+    if response_json == None:             
+      g.add_category(each_category)
             
-          else:  
-            count = response_json['total-hits']
-            if count > 0:
-              if count >10:
-                each_category = "*" + each_category + "*"
-                highlight="*"
-              cat_data = '>%s : %d%s'%(each_category,response_json['total-hits'],highlight)
-              game_data["category"].append(cat_data)    
+    else:  
+      count = response_json['total-hits']
+      if count > 0:
+        if count >10:
+          each_category = "*" + each_category + "*"
+          highlight="*"
 
-    return game_data 
-
-
-
+        cat_data = '>%s : %d%s'%(each_category,response_json['total-hits'],highlight)
+        g.add_category(cat_data)    
+   
+  return g
