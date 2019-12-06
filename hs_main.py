@@ -113,10 +113,10 @@ def retrieve_count(logger, my_game, days = None):
   response_json = game_data_request(logger,my_game,None,start_day,today_epoch)
   if response_json==None:
     g.set_error("*Error*:")
-    return game_data
+    return g
   if 'error' in response_json:
     g.set_error("*Error*: %s"%json.dumps(response_json['error']))
-    return game_data
+    return g
   hits = response_json["total-hits"]
   g.set_total(hits)
   
